@@ -1,0 +1,1125 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Telegram File Download</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg:#f4f6f8;
+      --surface:#ffffff;
+      --surface-2:#f8fafc;
+      --line:#dbe2ea;
+      --line-soft:#edf1f5;
+      --text:#17202c;
+      --muted:#687385;
+      --blue:#1d5fd6;
+      --blue-soft:#eaf2ff;
+      --green:#20885a;
+      --amber:#bd7600;
+      --red:#bd3c32;
+      --shadow:0 1px 2px rgba(15, 23, 42, .05);
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font:14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, input, textarea { font:inherit; }
+    button {
+      height:34px;
+      border:1px solid var(--line);
+      background:var(--surface);
+      border-radius:7px;
+      padding:0 11px;
+      color:var(--text);
+      cursor:pointer;
+      font-weight:650;
+      white-space:nowrap;
+    }
+    button:hover { border-color:#b8c4d2; background:#fbfcfe; }
+    button.primary { background:var(--blue); border-color:var(--blue); color:#fff; }
+    button.danger { color:var(--red); }
+    button:disabled {
+      color:#9aa5b3;
+      border-color:var(--line-soft);
+      background:#f3f6f9;
+      cursor:not-allowed;
+    }
+    input, textarea {
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:7px;
+      background:#fff;
+      padding:7px 9px;
+      color:var(--text);
+      min-width:0;
+    }
+    textarea { min-height:36px; resize:vertical; }
+    label { display:grid; gap:5px; color:var(--muted); font-size:12px; min-width:0; }
+    h1, h2, h3, p { margin:0; }
+    [hidden] { display:none !important; }
+    h1 { font-size:18px; line-height:1.2; }
+    h2 { font-size:14px; line-height:1.2; }
+    h3 { font-size:13px; line-height:1.2; }
+    .muted { color:var(--muted); }
+    .app-header {
+      min-height:58px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:0 20px;
+      background:var(--surface);
+      border-bottom:1px solid var(--line);
+      position:sticky;
+      top:0;
+      z-index:3;
+    }
+    .brand { display:grid; gap:3px; min-width:0; }
+    .header-status { display:flex; align-items:center; gap:8px; min-width:0; }
+    .state-pill {
+      min-width:78px;
+      text-align:center;
+      border:1px solid var(--line);
+      background:var(--surface-2);
+      border-radius:999px;
+      padding:5px 10px;
+      font-weight:700;
+    }
+    .auth-shell {
+      min-height:calc(100vh - 90px);
+      display:grid;
+      place-items:center;
+      padding:22px 16px;
+    }
+    .login-panel {
+      width:min(720px, 100%);
+    }
+    .login-copy {
+      color:var(--muted);
+      font-size:13px;
+    }
+    main {
+      width:100%;
+      max-width:1440px;
+      margin:0 auto;
+      padding:16px;
+      display:grid;
+      gap:14px;
+    }
+    .layout {
+      display:grid;
+      grid-template-columns:minmax(260px, 320px) minmax(420px, 1fr) minmax(300px, 360px);
+      gap:14px;
+      align-items:start;
+    }
+    .stack { display:grid; gap:14px; min-width:0; }
+    .panel {
+      background:var(--surface);
+      border:1px solid var(--line);
+      border-radius:8px;
+      box-shadow:var(--shadow);
+      min-width:0;
+      overflow:hidden;
+    }
+    .panel-head {
+      min-height:44px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px 13px;
+      border-bottom:1px solid var(--line-soft);
+    }
+    .panel-body { padding:12px 13px; min-width:0; }
+    .toolbar { display:flex; gap:8px; align-items:end; flex-wrap:wrap; min-width:0; }
+    .toolbar label { width:118px; }
+    .toolbar .wide { width:170px; }
+    .download-task {
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) auto;
+      align-items:center;
+      gap:12px;
+      padding-bottom:12px;
+      border-bottom:1px solid var(--line-soft);
+    }
+    .task-copy {
+      display:grid;
+      gap:4px;
+      min-width:0;
+    }
+    .task-copy strong {
+      font-size:18px;
+      line-height:1.15;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .task-label {
+      color:var(--muted);
+      font-size:12px;
+      font-weight:700;
+    }
+    .download-section {
+      display:grid;
+      gap:9px;
+      padding-top:2px;
+    }
+    .section-head {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      min-width:0;
+    }
+    .section-head strong { font-size:13px; }
+    .section-head span {
+      color:var(--muted);
+      font-size:12px;
+      text-align:right;
+    }
+    .metrics {
+      display:grid;
+      grid-template-columns:repeat(6, minmax(76px, 1fr));
+      gap:8px;
+    }
+    .metric {
+      min-width:0;
+      border:1px solid var(--line-soft);
+      border-radius:8px;
+      background:var(--surface-2);
+      padding:9px 10px;
+    }
+    .metric strong { display:block; font-size:18px; line-height:1.15; }
+    .metric span { display:block; color:var(--muted); font-size:12px; margin-top:3px; }
+    .progress-track {
+      height:10px;
+      border-radius:999px;
+      background:#e7ecf2;
+      overflow:hidden;
+      display:flex;
+    }
+    .progress-track > div { height:100%; }
+    .progress-track.single > div { background:var(--blue); }
+    .downloaded { background:var(--green); }
+    .skipped { background:var(--amber); }
+    .failed { background:var(--red); }
+    .progress-legend {
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .progress-legend span { display:flex; align-items:center; gap:5px; }
+    .legend-dot {
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background:#c9d2df;
+      flex:0 0 auto;
+    }
+    .current-list { display:grid; gap:8px; }
+    .current-file {
+      border:1px solid var(--line-soft);
+      border-radius:8px;
+      background:var(--surface-2);
+      padding:9px;
+      min-width:0;
+    }
+    .current-title, .target {
+      display:block;
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .meta-row {
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      color:var(--muted);
+      font-size:12px;
+      margin-top:6px;
+      flex-wrap:wrap;
+    }
+    .list {
+      display:grid;
+      gap:7px;
+      overflow:auto;
+      min-height:0;
+    }
+    .month-list { max-height:660px; }
+    .event-list { max-height:300px; }
+    .queue-list { max-height:170px; }
+    .month-row {
+      display:grid;
+      grid-template-columns:22px minmax(0, 1fr);
+      gap:8px;
+      align-items:start;
+      border:1px solid var(--line-soft);
+      border-radius:8px;
+      background:var(--surface-2);
+      padding:9px;
+      cursor:pointer;
+    }
+    .month-row.active { border-color:var(--blue); background:var(--blue-soft); }
+    .month-meta { display:flex; gap:8px; flex-wrap:wrap; color:var(--muted); font-size:12px; margin-top:3px; }
+    .tabs {
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(0, 1fr));
+      gap:6px;
+      padding:4px;
+      border:1px solid var(--line-soft);
+      border-radius:8px;
+      background:var(--surface-2);
+    }
+    .tab-button {
+      width:100%;
+      border-color:transparent;
+      background:transparent;
+    }
+    .tab-button.active {
+      background:var(--surface);
+      border-color:var(--line);
+      box-shadow:var(--shadow);
+    }
+    .tab-panel[hidden] { display:none; }
+    .row-card, .event, .queue-row {
+      border:1px solid var(--line-soft);
+      border-radius:8px;
+      background:var(--surface-2);
+      padding:8px;
+      min-width:0;
+      overflow:hidden;
+    }
+    .event, .queue-row, .row-card { font-family:ui-monospace, Menlo, monospace; font-size:12px; }
+    .auth-grid { display:grid; gap:10px; }
+    .auth-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    details.panel > summary {
+      list-style:none;
+      cursor:pointer;
+    }
+    details.panel > summary::-webkit-details-marker { display:none; }
+    .qr-box { margin-top:10px; }
+    .qr-box[hidden], .auth-actions[hidden] { display:none; }
+    .qr-img {
+      width:210px;
+      height:210px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:#fff;
+      padding:8px;
+    }
+    .empty { color:var(--muted); padding:8px; }
+    @media (max-width:1180px) {
+      .layout { grid-template-columns:minmax(280px, .9fr) minmax(420px, 1.1fr); }
+      .side-column { grid-column:1 / -1; grid-template-columns:repeat(2, minmax(0, 1fr)); }
+      .metrics { grid-template-columns:repeat(4, minmax(90px, 1fr)); }
+    }
+    @media (max-width:760px) {
+      .app-header { align-items:flex-start; flex-direction:column; padding:12px 14px; }
+      main { padding:12px; }
+      .layout, .side-column { grid-template-columns:1fr; }
+      .download-task { grid-template-columns:1fr; align-items:start; }
+      .metrics { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+      .toolbar label, .toolbar .wide { width:100%; }
+      .panel-head { align-items:flex-start; flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <h1>Telegram File Download</h1>
+    </div>
+    <div class="header-status">
+      <span class="state-pill" id="headerAuthStatus">检查登录</span>
+      <button id="headerSignOutButton" onclick="signOut()" hidden>退出登录</button>
+    </div>
+  </header>
+
+  <section id="loginView" class="auth-shell" hidden>
+    <div class="panel login-panel">
+      <div class="panel-head">
+        <h2>登录 Telegram</h2>
+        <span class="muted" id="authStatus">检查登录状态中</span>
+      </div>
+      <div class="panel-body stack">
+        <div id="qrLoginPanel" class="stack">
+          <p class="login-copy">使用 Telegram 手机 App 扫码，为下载器创建独立只读会话；若账号开启两步验证，扫码后会要求输入两步验证密码。</p>
+          <button class="primary" onclick="startQrLogin()">生成登录二维码</button>
+          <div id="qrLoginBox" class="qr-box" hidden>
+            <img id="qrLoginImage" class="qr-img" alt="Telegram 登录二维码">
+          </div>
+          <div id="qrPasswordBox" class="auth-actions" hidden>
+            <label style="min-width:200px"><span>两步验证密码</span><input id="qrPassword" type="password" placeholder="Telegram 两步验证密码"></label>
+            <button class="primary" onclick="submitQrPassword()">提交密码</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main id="appView" hidden>
+    <div class="layout">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>月份</h2>
+          <span class="muted" id="monthCount">0</span>
+        </div>
+          <div class="panel-body stack">
+          <div class="toolbar">
+            <button id="scanMonthsButton" class="primary" onclick="post('/api/scan-months', {})">扫描月份</button>
+            <button onclick="selectVisibleMonths()">全选</button>
+            <button onclick="clearSelectedMonths()">取消全选</button>
+            <button class="primary" onclick="startCheckedMonths()">添加到下载</button>
+            <span class="muted" id="monthActionStatus"></span>
+          </div>
+          <div class="toolbar">
+            <label><span>开始日期</span><input id="monthStartDate" type="date" onchange="renderMonths()"></label>
+            <label><span>结束日期</span><input id="monthEndDate" type="date" onchange="renderMonths()"></label>
+            <button onclick="clearMonthDateRange()">清空日期</button>
+          </div>
+          <div class="download-section">
+            <div class="section-head">
+              <strong>选择范围</strong>
+              <span id="selectedMonthStatus">未选择</span>
+            </div>
+            <div id="selectedMonthDetail" class="row-card">先扫描月份，然后选择月份。</div>
+          </div>
+          <div class="list month-list" id="monthList"></div>
+        </div>
+      </section>
+
+      <section class="stack">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>下载</h2>
+            <span class="muted" id="downloadStateText">空闲</span>
+          </div>
+          <div class="panel-body stack">
+            <div class="tabs">
+              <button id="downloadTabButton" class="tab-button active" onclick="showDownloadTab('download')">下载 0</button>
+              <button id="skippedTabButton" class="tab-button" onclick="showDownloadTab('skipped')">跳过 0</button>
+              <button id="failedTabButton" class="tab-button" onclick="showDownloadTab('failed')">失败 0</button>
+            </div>
+            <div id="downloadTabPanel" class="tab-panel stack">
+              <div class="tabs">
+                <button id="currentDownloadTabButton" class="tab-button active" onclick="showDownloadWorkTab('current')">当前下载</button>
+                <button id="pendingDownloadTabButton" class="tab-button" onclick="showDownloadWorkTab('pending')">待处理列表 0</button>
+              </div>
+              <div id="currentDownloadTabPanel" class="tab-panel stack">
+                <div class="download-task">
+                  <div class="task-copy">
+                    <span class="task-label">当前任务</span>
+                    <strong id="activeJobTitle">没有运行中的任务</strong>
+                    <span class="muted" id="activeJobMeta">从左侧选择月份或恢复项后开始下载</span>
+                  </div>
+                  <div class="toolbar">
+                    <button id="pauseButton" onclick="togglePauseResume()">暂停</button>
+                    <button id="stopButton" class="danger" onclick="post('/api/stop', {})">停止</button>
+                  </div>
+                </div>
+                <div class="download-section">
+                  <div class="section-head">
+                    <strong>总体进度</strong>
+                    <span id="downloadSummaryText">已处理 0 / 0</span>
+                  </div>
+                  <div class="metrics">
+                    <div class="metric"><strong id="total">0</strong><span>总数</span></div>
+                    <div class="metric"><strong id="downloaded">0</strong><span>已下载</span></div>
+                    <div class="metric"><strong id="skipped">0</strong><span>已跳过</span></div>
+                    <div class="metric"><strong id="pending">0</strong><span>待处理</span></div>
+                    <div class="metric"><strong id="source_missing">0</strong><span>无源文件</span></div>
+                    <div class="metric"><strong id="failed">0</strong><span>失败</span></div>
+                  </div>
+                  <div class="progress-track">
+                    <div class="downloaded" id="downloadedBar" style="width:0%"></div>
+                    <div class="skipped" id="skippedBar" style="width:0%"></div>
+                    <div class="failed" id="failedBar" style="width:0%"></div>
+                  </div>
+                  <div class="progress-legend">
+                    <span><i class="legend-dot downloaded"></i>已下载</span>
+                    <span><i class="legend-dot skipped"></i>已跳过</span>
+                    <span><i class="legend-dot failed"></i>失败</span>
+                    <span><i class="legend-dot"></i>待处理</span>
+                  </div>
+                </div>
+                <div class="download-section">
+                  <div class="section-head">
+                    <strong>当前文件</strong>
+                    <span id="currentStatusText">暂无下载</span>
+                  </div>
+                  <div id="current" class="current-list"><div class="empty">暂无下载中的文件</div></div>
+                  <div id="currentProgressWrap" class="stack" hidden>
+                    <div class="progress-track single">
+                      <div id="currentProgressBar" style="width:0%"></div>
+                    </div>
+                    <div class="meta-row">
+                      <span id="currentProgressText">0%</span>
+                      <span id="currentSpeedText">0 B/s</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="pendingDownloadTabPanel" class="tab-panel stack" hidden>
+                <div class="toolbar">
+                  <button id="clearPendingDownloadsButton" class="danger" onclick="clearPendingDownloads()">清空列表</button>
+                  <span class="muted" id="pendingDownloadStatus"></span>
+                </div>
+                <div class="list month-list" id="pendingDownloadList"><div class="empty">暂无待处理项目</div></div>
+              </div>
+            </div>
+            <div id="skippedTabPanel" class="tab-panel stack" hidden>
+              <div class="toolbar">
+                <button onclick="selectVisibleSkipped()">全选</button>
+                <button onclick="clearSelectedSkipped()">取消全选</button>
+                <button class="primary" onclick="startCheckedSkipped()">恢复勾选到下载</button>
+              </div>
+              <div class="list month-list" id="skippedList"></div>
+            </div>
+            <div id="failedTabPanel" class="tab-panel stack" hidden>
+              <div class="toolbar">
+                <button onclick="selectVisibleFailures()">全选</button>
+                <button onclick="clearSelectedFailures()">取消全选</button>
+                <button class="primary" onclick="startCheckedFailures()">恢复勾选到下载</button>
+              </div>
+              <div class="list month-list" id="failedList"></div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="stack side-column">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>设置</h2>
+            <span class="muted" id="settingsStatus">未应用</span>
+          </div>
+          <div class="panel-body stack">
+            <label><span>下载路径</span><input id="downloadRoot" value="/Volumes/ZHITAI/telegram" placeholder="/Volumes/ZHITAI/telegram" oninput="markDownloadRootDirty()"></label>
+            <div class="toolbar">
+              <button onclick="chooseDownloadFolder()">选择文件夹</button>
+            </div>
+            <label><span>大小上限(MB)</span><input id="maxMb" type="number" value="0" min="0" oninput="markSettingsDirty()"></label>
+            <label><span>并发下载（尽量不要超过3）</span><input id="concurrency" type="number" value="2" min="1" max="4" oninput="markSettingsDirty()"></label>
+            <div class="toolbar">
+              <button class="primary" onclick="applySettings()">应用生效</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>事件</h2>
+            <span class="muted">最近 80 条</span>
+          </div>
+          <div class="panel-body">
+            <div class="list event-list" id="events"></div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    let latest = null;
+    let selectedMonth = '';
+    const checkedMonths = new Set();
+    const checkedSkipped = new Set();
+    const checkedFailures = new Set();
+    let visibleMonths = [];
+    let visibleSkipped = [];
+    let visibleFailures = [];
+    let activeDownloadTab = 'download';
+    let activeDownloadWorkTab = 'current';
+    let downloadRootDirty = false;
+    let settingsDirty = false;
+    let authMessageUntil = 0;
+    let refreshInFlight = false;
+    let latestAuth = null;
+    const $ = (id) => document.getElementById(id);
+    const value = (id) => Number($(id).value || 0);
+    const API_BASE = window.location.origin;
+    const stateLabels = {
+      idle: '空闲',
+      running: '下载中',
+      pausing: '暂停中',
+      paused: '已暂停',
+      stopping: '停止中',
+      stopped: '已停止',
+      scanning: '扫描中',
+      scanning_running: '扫描并下载',
+      error: '出错'
+    };
+    const eventTranslations = [
+      [/scan months/g, '开始扫描月份'],
+      [/month scan stopped/g, '月份扫描已停止'],
+      [/months scanned (\d+)/g, '月份扫描完成：$1 个月份'],
+      [/stop requested/g, '已请求停止'],
+      [/pause requested/g, '已请求暂停'],
+      [/queued selected months count=(\d+)/g, '已添加到下载：$1 项'],
+      [/queued (.+)/g, '已添加到下载：$1'],
+      [/cleared pending downloads count=(\d+)/g, '已清空待处理列表：$1 项'],
+      [/Telegram connection is busy/g, 'Telegram 连接忙，已等待'],
+      [/pending complete/g, '待处理已完成'],
+      [/skipped >limit (\d+) ([0-9.]+)MB/g, '跳过大文件 $1（$2MB）'],
+      [/exists (\d+)/g, '已存在 $1'],
+      [/downloading (\d+) attempt=(\d+)/g, '正在下载 $1，第 $2 次尝试'],
+      [/download retry (\d+) attempt=(\d+) error=/g, '下载重试 $1，第 $2 次失败：'],
+      [/download failed (\d+) /g, '下载失败并跳过 $1：'],
+      [/source missing (\d+)/g, '无源文件 $1'],
+      [/downloading (\d+)/g, '正在下载 $1'],
+      [/downloaded (\d+)/g, '已下载 $1'],
+      [/complete/g, '完成'],
+      [/stopped/g, '已停止'],
+      [/paused/g, '已暂停'],
+      [/scan error /g, '扫描错误：'],
+      [/Telegram Web 授权已失效/g, 'Telegram Web 授权已失效'],
+      [/同一份 session 被不同网络同时使用/g, '同一份登录会话被不同网络同时使用'],
+      [/error /g, '错误：']
+    ];
+
+    async function apiFetch(path, options = {}, timeoutMs = 5000) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        return await fetch(`${API_BASE}${path}`, {
+          cache: 'no-store',
+          ...options,
+          signal: controller.signal
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
+    async function post(url, body) {
+      try {
+        const res = await apiFetch(url, { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify(body) }, 12000);
+        const payload = await res.json().catch(() => ({}));
+        if (payload.error) setAuthMessage(payload.error, 20000);
+        if (url === '/api/sign-out') {
+          setAuthMessage(payload.ok ? '已退出登录。' : '退出登录失败。', 12000);
+          if (payload.ok) {
+            latest = null;
+            latestAuth = {authorized: false, session_exists: false};
+            updateAuthView(latestAuth);
+          }
+        }
+        else if (url === '/api/qr-start') handleQrPayload(payload);
+        else if (url === '/api/qr-password') setAuthMessage(payload.ok ? '两步验证密码已提交，请稍等...' : '两步验证密码提交失败。', 16000);
+        await refreshAuth(true);
+        if (latestAuth && latestAuth.authorized) await refresh();
+        return payload;
+      } catch (err) {
+        setAuthMessage(`请求失败：${err}`, 20000);
+        return {ok:false, error:String(err)};
+      }
+    }
+
+    function setAuthMessage(text, ms = 10000) {
+      $('authStatus').textContent = text;
+      authMessageUntil = Date.now() + ms;
+    }
+    function updateAuthView(auth) {
+      const authorized = Boolean(auth && auth.authorized);
+      $('loginView').hidden = authorized;
+      $('appView').hidden = !authorized;
+      $('headerSignOutButton').hidden = !authorized;
+      $('headerAuthStatus').textContent = authorized ? '已登录' : '未登录';
+      if (authorized && Date.now() >= authMessageUntil) {
+        $('authStatus').textContent = auth.busy ? '已登录，下载会话正在使用中' : '已登录';
+      } else if (!authorized && Date.now() >= authMessageUntil) {
+        $('authStatus').textContent = auth && auth.session_exists ? '登录已失效，请重新扫码' : '请使用二维码登录';
+      }
+    }
+    async function refreshAuth(force = false) {
+      if (!force && Date.now() < authMessageUntil) return;
+      try {
+        const res = await apiFetch('/api/auth-status', {}, 7000);
+        const auth = await res.json();
+        latestAuth = auth;
+        updateAuthView(auth);
+        if (auth.authorized && !latest) await refresh();
+      } catch {
+        $('authStatus').textContent = '登录状态检查失败';
+        $('headerAuthStatus').textContent = '检查失败';
+        $('loginView').hidden = false;
+        $('appView').hidden = true;
+      }
+    }
+    function signOut() {
+      post('/api/sign-out', {});
+    }
+    function startQrLogin() {
+      setAuthMessage('正在生成 Telegram 登录二维码...', 20000);
+      post('/api/qr-start', {});
+      pollQrStatus();
+    }
+    async function pollQrStatus() {
+      try {
+        const res = await apiFetch('/api/qr-status', {}, 7000);
+        const payload = await res.json();
+        handleQrPayload(payload);
+        if (['waiting', 'starting', 'password_required', 'password_submitted'].includes(payload.state)) {
+          setTimeout(pollQrStatus, 1500);
+        } else if (payload.state === 'authorized') {
+          await refreshAuth(true);
+        }
+      } catch (err) {
+        setAuthMessage(`二维码状态检查失败：${err}`, 12000);
+      }
+    }
+    function handleQrPayload(payload) {
+      if (payload.image) {
+        $('qrLoginImage').src = payload.image;
+        $('qrLoginBox').hidden = false;
+      }
+      if (payload.state === 'waiting') setAuthMessage('请用 Telegram 手机 App 扫描二维码并确认登录。', 20000);
+      else if (payload.state === 'password_required') {
+        $('qrPasswordBox').hidden = false;
+        setAuthMessage('账号已开启两步验证，请输入 Telegram 两步验证密码。', 30000);
+      } else if (payload.state === 'password_submitted') {
+        setAuthMessage('两步验证密码已提交，正在完成登录...', 20000);
+      } else if (payload.state === 'authorized') {
+        $('qrLoginBox').hidden = true;
+        $('qrPasswordBox').hidden = true;
+        setAuthMessage('二维码登录成功，独立会话已授权。', 20000);
+      } else if (payload.state === 'expired') setAuthMessage(payload.error || '二维码已超时，请重新生成。', 16000);
+      else if (payload.state === 'error') setAuthMessage(payload.error || '二维码登录失败。', 20000);
+    }
+    function submitQrPassword() {
+      const password = $('qrPassword').value;
+      if (!password) {
+        setAuthMessage('请输入两步验证密码。', 12000);
+        return;
+      }
+      post('/api/qr-password', {password});
+      pollQrStatus();
+    }
+
+    function pct(part, total) { return total ? Math.min(100, Math.max(0, part / total * 100)) : 0; }
+    function setText(id, value) { $(id).textContent = value; }
+    function labelState(state) { return stateLabels[state] || state || '未知'; }
+    function formatBytes(bytes) {
+      const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+      let value = Number(bytes || 0);
+      let unit = 0;
+      while (value >= 1024 && unit < units.length - 1) {
+        value /= 1024;
+        unit += 1;
+      }
+      return `${value >= 10 || unit === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[unit]}`;
+    }
+    function formatSpeed(bytesPerSecond) { return `${formatBytes(bytesPerSecond)}/秒`; }
+    function translateEvent(event) {
+      let text = String(event ?? '');
+      for (const [pattern, replacement] of eventTranslations) text = text.replace(pattern, replacement);
+      return text;
+    }
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
+    }
+
+    async function refresh() {
+      if (latestAuth && !latestAuth.authorized) return;
+      if (refreshInFlight) return;
+      refreshInFlight = true;
+      try {
+        const res = await apiFetch('/api/status', {}, 45000);
+        latest = await res.json();
+        const s = latest.stats || {};
+        for (const key of ['total','downloaded','skipped','pending','source_missing','failed']) {
+          setText(key, s[key] ?? 0);
+        }
+        setText('downloadStateText', labelState(latest.state));
+        setText('downloadSummaryText', `已处理 ${s.handled ?? 0} / ${s.total ?? 0}`);
+        $('downloadedBar').style.width = pct(s.downloaded, s.total) + '%';
+        $('skippedBar').style.width = pct(s.skipped, s.total) + '%';
+        $('failedBar').style.width = pct(s.failed, s.total) + '%';
+        updateSettings(latest.settings || {out_root: latest.out_root});
+        $('scanMonthsButton').textContent = Object.keys(latest.months || {}).length ? '重新扫描月份' : '扫描月份';
+        renderCurrent();
+        renderPendingDownloads();
+        renderEvents();
+        renderMonths();
+        renderSkipped();
+        renderFailures();
+      } catch (error) {
+        $('downloadStateText').textContent = `重试中：${error.message}`;
+      } finally {
+        refreshInFlight = false;
+      }
+    }
+
+    function renderCurrent() {
+      const current = latest.current;
+      const currents = latest.currents && latest.currents.length ? latest.currents : (current ? [current] : []);
+      const wrap = $('currentProgressWrap');
+      const active = latest.active_job;
+      const canControl = Boolean(active) || ['running','pausing','scanning','scanning_running'].includes(latest.state);
+      const canResume = Boolean(active) && (latest.state === 'paused' || latest.pause_requested);
+      $('activeJobTitle').textContent = active ? active.label : '没有运行中的任务';
+      $('activeJobMeta').textContent = active
+        ? `${labelState(latest.state)}${active.concurrency ? ` · 并发 ${active.concurrency}` : ''}${latest.pause_requested ? ' · 正在暂停' : ''}`
+        : '从左侧选择月份或恢复项后开始下载';
+      $('pauseButton').textContent = canResume ? '继续' : '暂停';
+      $('pauseButton').disabled = !canControl;
+      $('stopButton').disabled = !canControl;
+      updateDownloadTabCount();
+      if (latest.state === 'scanning' || (latest.state === 'scanning_running' && !currents.length)) {
+        const p = latest.scan_progress || {messages:0, media:0, months:0};
+        $('currentStatusText').textContent = '正在扫描月份';
+        $('current').innerHTML = `<div class="row-card">扫描月份 · ${p.messages} 条消息 · ${p.media} 个媒体 · ${p.months} 个月份</div>`;
+        wrap.hidden = true;
+        return;
+      }
+      if (!currents.length) {
+        $('currentStatusText').textContent = '暂无下载';
+        $('current').innerHTML = '<div class="empty">暂无下载中的文件</div>';
+        wrap.hidden = true;
+        $('currentProgressBar').style.width = '0%';
+        return;
+      }
+      if (currents.length > 1) {
+        $('currentStatusText').textContent = `${currents.length} 个文件并行`;
+        $('current').innerHTML = currents.map(item => renderCurrentFile(item)).join('');
+        wrap.hidden = true;
+        $('currentProgressBar').style.width = '0%';
+        return;
+      }
+      const percent = Number(current.percent || 0);
+      const speedText = latest.state === 'paused' ? '已暂停' : formatSpeed(current.speed_bytes_per_sec);
+      $('currentStatusText').textContent = `${percent.toFixed(2)}% · ${speedText}`;
+      $('current').innerHTML = `<div class="current-file"><strong>${escapeHtml(current.message_id)}</strong><span class="target" title="${escapeHtml(current.target)}">${escapeHtml(current.target)}</span></div>`;
+      wrap.hidden = false;
+      $('currentProgressBar').style.width = `${Math.min(100, Math.max(0, percent))}%`;
+      $('currentProgressText').textContent = `${percent.toFixed(2)}% · ${formatBytes(current.downloaded_bytes)} / ${formatBytes(current.total_bytes || current.size_bytes)}`;
+      $('currentSpeedText').textContent = speedText;
+    }
+
+    function renderCurrentFile(item) {
+      const percent = Number(item.percent || 0);
+      return `<div class="current-file">
+        <strong>${escapeHtml(item.message_id)}</strong>
+        <span class="target" title="${escapeHtml(item.target)}">${escapeHtml(item.target)}</span>
+        <div class="progress-track single" style="margin-top:8px"><div style="width:${Math.min(100, Math.max(0, percent))}%"></div></div>
+        <div class="meta-row">
+          <span>${percent.toFixed(2)}% · ${formatBytes(item.downloaded_bytes)} / ${formatBytes(item.total_bytes || item.size_bytes)}</span>
+          <span>${latest.state === 'paused' ? '已暂停' : formatSpeed(item.speed_bytes_per_sec)}</span>
+        </div>
+      </div>`;
+    }
+
+    function renderPendingDownloads() {
+      const rows = latest.pending_downloads || [];
+      $('pendingDownloadTabButton').textContent = `待处理列表 ${rows.length}`;
+      $('clearPendingDownloadsButton').disabled = !rows.length;
+      updateDownloadTabCount();
+      $('pendingDownloadList').innerHTML = rows.map(row => `
+        <div class="queue-row">
+          <strong>${escapeHtml(row.message_id)}</strong>
+          <span class="target" title="${escapeHtml(row.target_path)}">${escapeHtml(row.target_path || '待解析文件路径')}</span>
+          <div class="month-meta"><span>${escapeHtml(row.size_mb || '0')} MB</span><span>${escapeHtml(row.date || '')}</span></div>
+        </div>
+      `).join('') || '<div class="empty">暂无待处理项目</div>';
+    }
+
+    function currentDownloadCount() {
+      const currents = latest && latest.currents && latest.currents.length
+        ? latest.currents
+        : (latest && latest.current ? [latest.current] : []);
+      return currents.length;
+    }
+
+    function updateDownloadTabCount() {
+      if (!latest) return;
+      const count = currentDownloadCount() + (latest.pending_downloads || []).length;
+      $('downloadTabButton').textContent = `下载 ${count}`;
+    }
+
+    function renderEvents() {
+      $('events').innerHTML = (latest.events || []).slice().reverse().map(e => `<div class="event">${escapeHtml(translateEvent(e))}</div>`).join('') || '<div class="empty">暂无事件</div>';
+    }
+
+    function updateDownloadPath(path) {
+      if (!path) return;
+      if ($('downloadPathLabel')) $('downloadPathLabel').textContent = path;
+      if (!downloadRootDirty && document.activeElement !== $('downloadRoot')) $('downloadRoot').value = path;
+    }
+
+    function updateSettings(settings) {
+      const path = settings.out_root || latest.out_root || '';
+      updateDownloadPath(path);
+      if (!settingsDirty) {
+        if (settings.max_mb !== undefined && document.activeElement !== $('maxMb')) $('maxMb').value = settings.max_mb;
+        if (settings.concurrency !== undefined && document.activeElement !== $('concurrency')) $('concurrency').value = settings.concurrency;
+      }
+    }
+
+    function markDownloadRootDirty() {
+      downloadRootDirty = true;
+      settingsDirty = true;
+      $('settingsStatus').textContent = '路径已修改，点击应用生效';
+    }
+
+    function markSettingsDirty() {
+      settingsDirty = true;
+      $('settingsStatus').textContent = '设置已修改，点击应用生效';
+    }
+
+    async function chooseDownloadFolder() {
+      $('settingsStatus').textContent = '正在打开文件夹选择器...';
+      try {
+        const res = await apiFetch('/api/choose-dir', {method: 'POST', headers: {'content-type':'application/json'}, body: '{}'}, 310000);
+        const payload = await res.json();
+        if (payload.ok) {
+          downloadRootDirty = true;
+          settingsDirty = true;
+          $('downloadRoot').value = payload.path;
+          $('settingsStatus').textContent = '已选择文件夹，点击应用生效';
+        } else if (payload.cancelled) {
+          $('settingsStatus').textContent = '已取消选择';
+        } else {
+          $('settingsStatus').textContent = payload.error || '选择失败';
+        }
+      } catch (error) {
+        $('settingsStatus').textContent = `选择失败：${error.message}`;
+      }
+    }
+
+    async function applySettings() {
+      const outRoot = $('downloadRoot').value.trim();
+      if (!outRoot) {
+        $('settingsStatus').textContent = '请输入下载路径';
+        return;
+      }
+      $('settingsStatus').textContent = '正在应用...';
+      const payload = await post('/api/settings', {
+        out_root: outRoot,
+        max_mb: value('maxMb'),
+        concurrency: value('concurrency')
+      });
+      if (payload.ok) {
+        downloadRootDirty = false;
+        settingsDirty = false;
+        updateSettings(payload.settings || {out_root: payload.out_root, max_mb: value('maxMb'), concurrency: value('concurrency')});
+        $('settingsStatus').textContent = `已应用 · ${$('maxMb').value}MB · 并发 ${$('concurrency').value}`;
+      } else {
+        $('settingsStatus').textContent = payload.error || '应用失败';
+      }
+    }
+
+    async function startCheckedMonths() {
+      const months = visibleMonths.filter(month => checkedMonths.has(month));
+      if (!months.length) {
+        $('monthActionStatus').textContent = '请先勾选月份';
+        return;
+      }
+      $('monthActionStatus').textContent = '正在添加...';
+      const payload = await post('/api/start-months', {months, max_mb:value('maxMb'), concurrency:value('concurrency')});
+      $('monthActionStatus').textContent = payload.ok
+        ? `已添加到下载：${payload.queued || 0} 项`
+        : (payload.error || '没有可添加到下载的文件');
+    }
+    function startCheckedSkipped() {
+      const ids = visibleSkipped
+        .filter(row => checkedSkipped.has(String(row.message_id)))
+        .map(row => String(row.message_id));
+      if (!ids.length) return;
+      post('/api/resume-skipped', {message_ids:ids, max_mb:value('maxMb'), concurrency:value('concurrency')});
+    }
+    function startCheckedFailures() {
+      const ids = visibleFailures
+        .filter(row => checkedFailures.has(String(row.message_id)))
+        .map(row => String(row.message_id));
+      if (!ids.length) return;
+      post('/api/resume-skipped', {message_ids:ids, max_mb:value('maxMb'), concurrency:value('concurrency')});
+    }
+    function togglePauseResume() {
+      if (latest && latest.active_job && (latest.state === 'paused' || latest.pause_requested)) {
+        post('/api/resume', {});
+        return;
+      }
+      post('/api/pause', {});
+    }
+    async function clearPendingDownloads() {
+      const rows = latest.pending_downloads || [];
+      if (!rows.length) {
+        $('pendingDownloadStatus').textContent = '暂无可清空项目';
+        return;
+      }
+      $('pendingDownloadStatus').textContent = '正在清空...';
+      const payload = await post('/api/clear-pending-downloads', {});
+      $('pendingDownloadStatus').textContent = payload.ok
+        ? `已清空 ${payload.cleared || 0} 项`
+        : (payload.error || '清空失败');
+    }
+    function showDownloadTab(tabName) {
+      activeDownloadTab = tabName;
+      $('downloadTabPanel').hidden = tabName !== 'download';
+      $('skippedTabPanel').hidden = tabName !== 'skipped';
+      $('failedTabPanel').hidden = tabName !== 'failed';
+      $('downloadTabButton').classList.toggle('active', tabName === 'download');
+      $('skippedTabButton').classList.toggle('active', tabName === 'skipped');
+      $('failedTabButton').classList.toggle('active', tabName === 'failed');
+    }
+    function showDownloadWorkTab(tabName) {
+      activeDownloadWorkTab = tabName;
+      $('currentDownloadTabPanel').hidden = tabName !== 'current';
+      $('pendingDownloadTabPanel').hidden = tabName !== 'pending';
+      $('currentDownloadTabButton').classList.toggle('active', tabName === 'current');
+      $('pendingDownloadTabButton').classList.toggle('active', tabName === 'pending');
+    }
+    function selectVisibleMonths() {
+      for (const month of visibleMonths) checkedMonths.add(month);
+      renderMonths();
+    }
+    function clearSelectedMonths() {
+      for (const month of visibleMonths) checkedMonths.delete(month);
+      renderMonths();
+    }
+    function toggleMonthCheck(month, event) {
+      event.stopPropagation();
+      if (checkedMonths.has(month)) checkedMonths.delete(month);
+      else checkedMonths.add(month);
+      renderMonths();
+    }
+    function chooseMonth(month) {
+      selectedMonth = month;
+      renderMonths();
+    }
+    function selectVisibleSkipped() {
+      for (const row of visibleSkipped) checkedSkipped.add(String(row.message_id));
+      renderSkipped();
+    }
+    function clearSelectedSkipped() {
+      for (const row of visibleSkipped) checkedSkipped.delete(String(row.message_id));
+      renderSkipped();
+    }
+    function toggleSkippedCheck(messageId, event) {
+      event.stopPropagation();
+      messageId = String(messageId);
+      if (checkedSkipped.has(messageId)) checkedSkipped.delete(messageId);
+      else checkedSkipped.add(messageId);
+      renderSkipped();
+    }
+    function selectVisibleFailures() {
+      for (const row of visibleFailures) checkedFailures.add(String(row.message_id));
+      renderFailures();
+    }
+    function clearSelectedFailures() {
+      for (const row of visibleFailures) checkedFailures.delete(String(row.message_id));
+      renderFailures();
+    }
+    function toggleFailureCheck(messageId, event) {
+      event.stopPropagation();
+      messageId = String(messageId);
+      if (checkedFailures.has(messageId)) checkedFailures.delete(messageId);
+      else checkedFailures.add(messageId);
+      renderFailures();
+    }
+    function clearMonthDateRange() {
+      $('monthStartDate').value = '';
+      $('monthEndDate').value = '';
+      renderMonths();
+    }
+    function monthOverlapsDateRange(month, startDate, endDate) {
+      if (!startDate && !endDate) return true;
+      const monthStart = `${month}-01`;
+      const [year, monthNumber] = month.split('-').map(Number);
+      const monthEndDate = new Date(year, monthNumber, 0);
+      const monthEnd = `${monthEndDate.getFullYear()}-${String(monthEndDate.getMonth() + 1).padStart(2, '0')}-${String(monthEndDate.getDate()).padStart(2, '0')}`;
+      if (startDate && monthEnd < startDate) return false;
+      if (endDate && monthStart > endDate) return false;
+      return true;
+    }
+    function renderMonths() {
+      if (!latest) return;
+      const months = latest.months || {};
+      const startDate = $('monthStartDate').value;
+      const endDate = $('monthEndDate').value;
+      const keys = Object.keys(months).sort().reverse().filter(key => {
+        if (!monthOverlapsDateRange(key, startDate, endDate)) return false;
+        return true;
+      });
+      visibleMonths = keys;
+      if (!keys.includes(selectedMonth)) selectedMonth = keys[0] || '';
+      const checkedVisible = keys.filter(key => checkedMonths.has(key)).length;
+      $('monthCount').textContent = `显示 ${keys.length} · 勾选 ${checkedVisible}`;
+      $('monthList').innerHTML = keys.map(key => {
+        const row = months[key];
+        return `<div class="month-row ${key === selectedMonth ? 'active' : ''}" onclick="chooseMonth('${key}')">
+          <input type="checkbox" ${checkedMonths.has(key) ? 'checked' : ''} onclick="toggleMonthCheck('${key}', event)">
+          <div>
+            <strong>${key}</strong>
+            <div class="month-meta"><span>总数 ${row.total}</span><span>已下载 ${row.downloaded}</span><span>已跳过 ${row.skipped}</span><span>待处理 ${row.pending}</span></div>
+          </div>
+        </div>`;
+      }).join('') || '<div class="empty">暂无月份索引</div>';
+      const row = months[selectedMonth];
+      $('selectedMonthStatus').textContent = row ? selectedMonth : '未选择';
+      $('selectedMonthDetail').innerHTML = row ? `
+        <strong>${selectedMonth}</strong>
+        <div class="month-meta"><span>总数 ${row.total}</span><span>已下载 ${row.downloaded}</span><span>已跳过 ${row.skipped}</span><span>待处理 ${row.pending}</span></div>
+      ` : '先扫描月份，然后选择月份。';
+    }
+    function renderRestoreRows(rows, checkedSet, toggleName, emptyText) {
+      return rows.map(row => {
+        const messageId = String(row.message_id);
+        const checked = checkedSet.has(messageId);
+        return `<label class="month-row" onclick="${toggleName}('${escapeHtml(messageId)}', event)">
+          <input type="checkbox" ${checked ? 'checked' : ''} onclick="${toggleName}('${escapeHtml(messageId)}', event)">
+          <div>
+            <strong>${escapeHtml(messageId)}</strong>
+            <span class="target" title="${escapeHtml(row.target_path)}">${escapeHtml(row.target_path)}</span>
+            <div class="month-meta"><span>${escapeHtml(row.size_mb || '0')} MB</span><span>${escapeHtml(row.date || '')}</span></div>
+          </div>
+        </label>`;
+      }).join('') || `<div class="empty">${emptyText}</div>`;
+    }
+    function activeMessageIds() {
+      const ids = new Set();
+      if (latest.current && latest.current.message_id) ids.add(String(latest.current.message_id));
+      for (const item of latest.currents || []) {
+        if (item.message_id) ids.add(String(item.message_id));
+      }
+      return ids;
+    }
+    function renderSkipped() {
+      if (!latest) return;
+      const failedIds = new Set((latest.failed_downloads || []).map(row => String(row.message_id)));
+      const activeIds = activeMessageIds();
+      const rows = (latest.skipped || []).filter(row => {
+        const messageId = String(row.message_id);
+        return !failedIds.has(messageId) && !activeIds.has(messageId);
+      });
+      visibleSkipped = rows;
+      const checkedVisible = rows.filter(row => checkedSkipped.has(String(row.message_id))).length;
+      $('skippedTabButton').textContent = `跳过 ${rows.length}${checkedVisible ? ` · ${checkedVisible}` : ''}`;
+      $('skippedList').innerHTML = renderRestoreRows(rows, checkedSkipped, 'toggleSkippedCheck', '没有可恢复的跳过项目');
+    }
+    function renderFailures() {
+      if (!latest) return;
+      const activeIds = activeMessageIds();
+      const rows = (latest.failed_downloads || []).filter(row => !activeIds.has(String(row.message_id)));
+      visibleFailures = rows;
+      const checkedVisible = rows.filter(row => checkedFailures.has(String(row.message_id))).length;
+      $('failedTabButton').textContent = `失败 ${rows.length}${checkedVisible ? ` · ${checkedVisible}` : ''}`;
+      $('failedList').innerHTML = renderRestoreRows(rows, checkedFailures, 'toggleFailureCheck', '没有可恢复的失败项目');
+    }
+
+    refreshAuth();
+    setInterval(() => {
+      if (latestAuth && latestAuth.authorized) refresh();
+    }, 1500);
+    setInterval(refreshAuth, 8000);
+  </script>
+</body>
+</html>

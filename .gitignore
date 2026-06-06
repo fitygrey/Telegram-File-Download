@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local runtime state
+.run/
+dashboard_settings.json
+revoked_sessions.json
+session_sign_out.json
+
+# Telegram auth/session data
+*.session
+*.session-journal
+*.string_session
+:memory:.session
+
+# Local/private project notes
+docs/
+.superpowers/
+
+# Environment files
+.env
+.env.*
